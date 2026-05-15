@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block subject %}{% endblock %}</title>
+<style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background-color: #f0f4f8;
+        margin: 0;
+        padding: 0;
+    }
+    .email-container {
+        max-width: 600px;
+        margin: 40px auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        overflow: hidden;
+    }
+    .email-header {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        text-align: center;
+        padding: 30px 20px;
+    }
+    .email-header h1 {
+        margin: 0;
+        font-size: 24px;
+    }
+    .email-body {
+        padding: 30px 20px;
+        color: #333;
+        font-size: 16px;
+        line-height: 1.6;
+    }
+    .btn {
+        display: inline-block;
+        background-color: #764ba2;
+        color: white;
+        padding: 12px 25px;
+        border-radius: 6px;
+        text-decoration: none;
+        font-size: 16px;
+        margin-top: 20px;
+    }
+    .footer { /* This is the signature */
+        text-align: center;
+        font-size: 12px;
+        color: #777;
+        padding: 20px;
+        border-top: 1px solid #eee;
+    }
+</style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="email-header">
+            <h1>{% block title %}{% endblock %}</h1>
+        </div>
+        <div class="email-body">
+            {% block content %}{% endblock %}
+        </div>
+        <div class="footer">
+            <p>Thank you,<br>The LMS Team</p>
+            &copy; {{ current_year }} LMS. All rights reserved.
+        </div>
+    </div>
+</body>
+</html>

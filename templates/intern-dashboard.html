@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intern Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/intern-style.css') }}">
+    <style>
+        /* Add basic styles for flash messages */
+        .flash-messages {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        .flash-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .flash-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+<div class="intern-container">
+
+    <aside class="sidebar">
+        <h2>Intern Panel</h2>
+        <ul>
+            <li><a href="#" onclick="showSection('viewMaterials')">View Materials</a></li>
+            <li><a href="#" onclick="showSection('viewScores')">View Scores</a></li>
+            <li><a href="#" onclick="showSection('editProfile')">Edit Profile</a></li>
+            <li><a href="#" onclick="showSection('contactAdmin')">Contact Admin</a></li>
+            <li><a href="#" class="logout-link">Logout</a></li>
+        </ul>
+    </aside>
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <main class="main-content">
+
+        <div class="top-nav">
+            <div class="hamburger-menu" onclick="toggleSidebar()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="welcome">
+                Welcome, <span id="internName">{{ user.name }}</span>
+            </div>
+            <div class="profile" onclick="toggleDropdown()">
+                <img src="{{ url_for('static', filename='images/profile-icon.png') }}" class="profile-icon">
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="#" class="logout-link">Logout</a>
+                </div>
+            </div>
+        </div>
+        
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-messages flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section id="viewMaterials">
+            <h3>Course Materials</h3>
+            <div class="cards">
+                {% for course in courses %}
+                <div class="card {% if course.is_locked %}locked{% endif %}">
+                    {% if course.id in passed_course_ids %}
+                        <span class="completed-badge">✓ Completed</span>
+                    {% elif course.is_locked %}
+                        <span class="locked-badge">🔒 Locked</span>
+                    {% endif %}
+                    <h4>{{ course.name }}</h4>
+                    <p>{{ course.description }}</p>
+                    
+                    {% if course.is_locked %}
+                        <button class="btn" disabled>Start Learning</button>
+                    {% else %}
+                        <a href="{{ url_for('learn', course_id=course.id) }}" class="btn">Start Learning</a>
+                    {% endif %}
+                </div>
+                {% else %}
+                <p>No course materials are available at this time.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="viewScores">
+            <h3>Your Scores</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Course</th>
+                        <th>Score</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for attempt in quiz_history %}
+                    <tr>
+                        <td>{{ attempt.name }}</td>
+                        <td>{{ attempt.score }} / {{ attempt.total_questions }}</td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="2">You have not completed any quizzes yet.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </section>
+
+        <section id="editProfile">
+            <h3>Edit Profile</h3>
+            <form action="{{ url_for('intern_edit_profile') }}" method="POST">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" value="{{ user.name }}" required>
+
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" value="{{ user.email }}" required>
+
+                 <label for="password">New Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Leave blank to keep current password">
+                    <span class="toggle-password" onclick="togglePasswordVisibility('password')">Show</span>
+                </div>
+                <small class="info-text">
+                    Must be at least 15 characters, with 1 uppercase, 1 lowercase, 1 number, and 1 symbol.
+                </small>
+                
+                <button type="submit" class="btn">Update Profile</button>
+            </form>
+        </section>
+
+        <section id="contactAdmin">
+            <h3>Contact Admin</h3>
+            <p>If you have an issue or a question, you can send a message to the administrators here.</p>
+            <form action="{{ url_for('contact_admin') }}" method="POST">
+                <textarea name="message_body" placeholder="Write your message..." rows="5" required></textarea>
+                <button type="submit" class="btn">Send Message</button>
+            </form>
+        </section>
+    </main>
+</div>
+
+<div class="popup-overlay" id="logoutConfirmOverlay"></div>
+<div class="popup" id="logoutConfirmPopup">
+    <div class="popup-header">
+        <h3>Confirm Logout</h3>
+    </div>
+    <p>Are you sure you want to log out?</p>
+    <div class="confirm-actions">
+        <button id="cancelLogoutBtn" class="btn btn-secondary">Cancel</button>
+        <button id="confirmLogoutBtn" class="btn btn-danger">Logout</button>
+    </div>
+</div>
+
+<script>
+    // Sidebar navigation
+    function showSection(sectionId){
+        document.querySelectorAll('main section').forEach(sec=>{
+            sec.classList.remove('active-section');
+        });
+        const sectionToShow = document.getElementById(sectionId);
+        if (sectionToShow) {
+            sectionToShow.classList.add('active-section');
+        }
+        if (document.querySelector('.sidebar').classList.contains('show')) {
+            toggleSidebar();
+        }
+    }
+
+    // Profile dropdown
+    function toggleDropdown(){
+        document.getElementById("dropdownMenu").classList.toggle("show");
+    }
+    window.onclick = function(e) {
+        if (!e.target.closest('.profile')) {
+            document.getElementById("dropdownMenu").classList.remove("show");
+        }
+    }
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('show');
+        document.querySelector('.overlay').classList.toggle('show');
+    }
+
+    // --- LOGOUT & PAGE LOAD LOGIC ---
+    document.addEventListener('DOMContentLoaded', function() {
+        // Show the correct section based on the URL parameter
+        const defaultSection = '{{ active_section }}';
+        showSection(defaultSection);
+
+        const logoutLinks = document.querySelectorAll('.logout-link');
+        const logoutOverlay = document.getElementById('logoutConfirmOverlay');
+        const logoutPopup = document.getElementById('logoutConfirmPopup');
+        const cancelBtn = document.getElementById('cancelLogoutBtn');
+        const confirmBtn = document.getElementById('confirmLogoutBtn');
+        const passwordField = document.getElementById('password');
+        const toggleButton = passwordField.nextElementSibling;
+        passwordField.addEventListener('input', () => {
+            if (passwordField.value.length > 0) {
+                toggleButton.style.display = 'block';
+            } else {
+                toggleButton.style.display = 'none';
+            }
+        });
+
+        function showLogoutModal() {
+            logoutOverlay.style.display = 'block';
+            logoutPopup.style.display = 'block';
+            document.body.classList.add('modal-open');
+        }
+
+        function hideLogoutModal() {
+            logoutOverlay.style.display = 'none';
+            logoutPopup.style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        hideLogoutModal(); // Reset modal on page load
+
+        logoutLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showLogoutModal();
+            });
+        });
+
+        confirmBtn.addEventListener('click', () => {
+            window.location.href = "{{ url_for('logout') }}";
+        });
+
+        cancelBtn.addEventListener('click', hideLogoutModal);
+        logoutOverlay.addEventListener('click', hideLogoutModal);
+    });
+
+
+    function togglePasswordVisibility(inputId) {
+        const passwordInput = document.getElementById(inputId);
+        const toggleIcon = passwordInput.nextElementSibling; // The <span>
+
+        if (passwordInput.type === "password") {
+            passwordInput.type = "text";
+            toggleIcon.textContent = "Hide";
+        } else {
+            passwordInput.type = "password";
+            toggleIcon.textContent = "Show";
+        }
+    }
+</script>
+</body>
+</html>

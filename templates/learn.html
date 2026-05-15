@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning: {{ course.name }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/intern-style.css') }}">
+    <style>
+        body { font-family: sans-serif; background-color: #f4f7f6; }
+        .learn-container { max-width: 800px; margin: 40px auto; padding: 30px; background-color: #fff; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .page-viewer { text-align: center; min-height: 500px; display: flex; align-items: center; justify-content: center; background-color: #fafafa; border-radius: 8px; margin-bottom: 20px;}
+        .page-viewer img { max-width: 100%; max-height: 500px; border: 1px solid #ddd; border-radius: 8px; }
+        .learn-nav { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 20px; margin-top: 20px; }
+        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; text-decoration: none; display: inline-block; }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; color: #666; }
+        #quizContainer { display: none; } /* Initially hidden */
+        .quiz-question { margin-bottom: 20px; font-weight: bold; }
+        .quiz-options label { display: block; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
+        .quiz-options label:hover { background-color: #f5f5f5; }
+        .quiz-options input { margin-right: 10px; }
+        #quizResults { margin-top: 20px; padding: 15px; border-radius: 8px; text-align: center; }
+        .result-actions a, .result-actions button { margin: 0 10px; }
+        .back-btn { margin-bottom: 20px; padding: 8px 15px; font-size: 14px; }
+    </style>
+</head>
+<body>
+    <div class="learn-container">
+        <a id="dashboardBtn" href="{{ url_for('intern_dashboard') }}" class="btn back-btn">&larr; Back to Dashboard</a>
+        <button id="materialBtn" class="btn back-btn" style="display: none;">&larr; Back to Material</button>
+        
+        <h2 style="text-align: center;">{{ course.name }}</h2>
+        <p style="text-align: center;">{{ course.description }}</p>
+        <hr>
+
+        <div id="learningContainer">
+            <div class="page-viewer">
+                <img id="pageImage" src="" alt="Course Content">
+            </div>
+            <div class="learn-nav">
+                <button id="prevBtn" class="btn">Previous Page</button>
+                <span id="progressText">Page 1 / 1</span>
+                <button id="nextBtn" class="btn">Next Page</button>
+            </div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button id="startQuizBtn" class="btn" disabled>Start Quiz</button>
+            </div>
+        </div>
+
+        <div id="quizContainer">
+            <h3 style="text-align: center;">Quiz Time!</h3>
+            <form id="quizForm"></form>
+            <div id="quizResults"></div>
+        </div>
+    </div>
+
+    <script>
+        const learningData = {{ learning_data | tojson | safe }};
+        const courseId = {{ course.id }};
+        const dashboardUrl = "{{ url_for('intern_dashboard') }}";
+    </script>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- DOM ELEMENTS ---
+        const pageImage = document.getElementById('pageImage');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressText = document.getElementById('progressText');
+        const startQuizBtn = document.getElementById('startQuizBtn');
+        const learningContainer = document.getElementById('learningContainer');
+        const quizContainer = document.getElementById('quizContainer');
+        const quizForm = document.getElementById('quizForm');
+        const quizResults = document.getElementById('quizResults');
+        const dashboardBtn = document.getElementById('dashboardBtn');
+        const materialBtn = document.getElementById('materialBtn');
+        
+        // --- STATE VARIABLES ---
+        let currentPage = 0;
+        let pages = learningData.pages || [];
+        let totalPages = pages.length;
+        let currentAttemptId = null;
+
+        // --- PAGE VIEWER LOGIC ---
+        function updateViewer() {
+            // ... (This function remains unchanged)
+            if (totalPages === 0) {
+                pageImage.alt = "No content available.";
+                prevBtn.disabled = true;
+                nextBtn.disabled = true;
+                progressText.textContent = "No Pages";
+                startQuizBtn.disabled = false;
+                return;
+            }
+            const imageUrl = `/uploads/${pages[currentPage]}`;
+            pageImage.src = imageUrl;
+            progressText.textContent = `Page ${currentPage + 1} / ${totalPages}`;
+            prevBtn.disabled = (currentPage === 0);
+            nextBtn.disabled = (currentPage === totalPages - 1);
+            if (currentPage === totalPages - 1) {
+                startQuizBtn.disabled = false;
+            }
+        }
+
+        prevBtn.addEventListener('click', () => { if (currentPage > 0) { currentPage--; updateViewer(); } });
+        nextBtn.addEventListener('click', () => { if (currentPage < totalPages - 1) { currentPage++; updateViewer(); } });
+
+        // --- NAVIGATION LOGIC ---
+        startQuizBtn.addEventListener('click', () => {
+            learningContainer.style.display = 'none';
+            quizContainer.style.display = 'block';
+            
+            // Swap the main back buttons
+            dashboardBtn.style.display = 'none';
+            materialBtn.style.display = 'block';
+            
+            startQuiz();
+        });
+
+        materialBtn.addEventListener('click', () => {
+            quizContainer.style.display = 'none';
+            learningContainer.style.display = 'block';
+
+            // Swap the main back buttons back
+            materialBtn.style.display = 'none';
+            dashboardBtn.style.display = 'block';
+        });
+
+        // --- QUIZ LOGIC ---
+        function startQuiz() {
+            // ... (This function remains unchanged)
+            quizForm.innerHTML = '<p>Loading quiz...</p>';
+            quizResults.innerHTML = ''; // Clear previous results
+            quizForm.style.display = 'block';
+            
+            fetch(`/start_quiz/${courseId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        quizForm.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                        return;
+                    }
+                    currentAttemptId = data.attempt_id;
+                    const questions = data.quiz;
+                    quizForm.innerHTML = '';
+                    questions.forEach((q, index) => {
+                        let optionsHtml = '<div class="quiz-options">';
+                        q.options.forEach(option => {
+                            optionsHtml += `<label><input type="radio" name="question-${index}" value="${option}" required> ${option}</label>`;
+                        });
+                        optionsHtml += '</div>';
+                        const questionDiv = document.createElement('div');
+                        questionDiv.innerHTML = `<p class="quiz-question">${index + 1}. ${q.question}</p>${optionsHtml}`;
+                        quizForm.appendChild(questionDiv);
+                    });
+                    const submitButton = document.createElement('button');
+                    submitButton.type = 'submit';
+                    submitButton.className = 'btn';
+                    submitButton.style.marginTop = '20px';
+                    submitButton.textContent = 'Submit Answers';
+                    quizForm.appendChild(submitButton);
+                })
+                .catch(error => {
+                    console.error('Error starting quiz:', error);
+                    quizForm.innerHTML = `<p style="color: red;">Could not load the quiz.</p>`;
+                });
+        }
+        
+        quizForm.addEventListener('submit', handleQuizSubmit);
+
+        function handleQuizSubmit(event) {
+            event.preventDefault();
+            // ... (This part remains unchanged)
+            const formData = new FormData(event.target);
+            const userAnswers = [];
+            const questionCount = quizForm.querySelectorAll('.quiz-question').length;
+            for (let i = 0; i < questionCount; i++) {
+                userAnswers.push(formData.get(`question-${i}`));
+            }
+
+            fetch(`/submit_quiz/${currentAttemptId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ answers: userAnswers }),
+            })
+            .then(response => response.json())
+            .then(result => {
+                quizForm.style.display = 'none'; // Hide the questions
+                materialBtn.style.display = 'none'; // Hide "Back to Material" button
+                dashboardBtn.style.display = 'block'; // Show "Back to Dashboard" button
+
+                let resultColor = result.status === 'Pass' ? 'green' : 'red';
+                let actionsHtml = '';
+
+                // **NEW: Conditional buttons based on Pass/Fail status**
+                if (result.status === 'Pass') {
+                    actionsHtml = `
+                        <a href="${dashboardUrl}" class="btn">Return to Dashboard</a>
+                    `;
+                } else { // Fail
+                    actionsHtml = `
+                        <button class="btn" onclick="startQuiz()">Retry Quiz</button>
+                        <a href="${dashboardUrl}" class="btn">Return to Dashboard</a>
+                    `;
+                }
+
+                quizResults.innerHTML = `
+                    <h4>Quiz Complete!</h4>
+                    <p>You scored ${result.score} out of ${result.total}.</p>
+                    <h5 style="color: ${resultColor};">Status: ${result.status}</h5>
+                    <div class="result-actions">${actionsHtml}</div>
+                `;
+            })
+            .catch(error => {
+                console.error('Error submitting quiz:', error);
+                quizResults.innerHTML = `<p style="color: red;">Error submitting your answers.</p>`;
+            });
+        }
+
+        // --- INITIALIZATION ---
+        updateViewer();
+    });
+    </script>
+</body>
+</html>

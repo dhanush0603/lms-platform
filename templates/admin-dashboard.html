@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/admin-style.css') }}">
+</head>
+<body>
+<div class="admin-container">
+
+    <aside class="sidebar">
+        <h2>Admin Panel</h2>
+        <ul>
+            <li><a href="#" onclick="showSection('uploadSection')">Upload Course</a></li>
+            <li><a href="#" onclick="showSection('viewCoursesSection')">View Courses</a></li>
+            <li><a href="#" onclick="showSection('admins')">Admins</a></li>
+            <li><a href="#" onclick="showSection('interns')">Interns</a></li>
+            <li><a href="#" onclick="showSection('editProfile')">Edit Profile</a></li>
+            <li><a href="#" class="logout-link">Logout</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        
+        <div class="top-nav">
+            <div class="hamburger-menu" onclick="toggleSidebar()">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+            <div class="welcome">
+                Welcome, {{ user.name }}
+            </div>
+            <div class="profile" onclick="toggleDropdown()">
+                <img src="{{ url_for('static', filename='images/profile-icon.png') }}" class="profile-icon">
+                <div class="dropdown-menu" id="dropdownMenu">
+                    <a href="#" class="logout-link">Logout</a>
+                </div>
+            </div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash-messages flash-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <section id="uploadSection">
+            <h3>Upload New Course</h3>
+            <form action="{{ url_for('upload_course') }}" method="POST" enctype="multipart/form-data">
+                <input type="text" name="name" placeholder="Course Title" required>
+                <textarea name="description" placeholder="Course Description" rows="3" required></textarea>
+                <input type="file" name="course_file" required>
+                <button type="submit" class="btn">Upload</button>
+            </form>
+            <hr>
+            <h3>Recently Added</h3>
+            <div class="course-grid">
+                {% for course in recent_courses %}
+                <div class="course-card" data-id="{{ course.id }}" data-name="{{ course.name | e }}" data-description="{{ course.description | e }}" data-filename="{{ course.filename | e }}" onclick="showCourseDetails(this)">
+                    <h4>{{ course.name }}</h4>
+                    <p>{{ course.description[:80] }}{% if course.description|length > 80 %}...{% endif %}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="viewCoursesSection">
+            <h3>All Courses</h3>
+            <div class="course-grid">
+                {% for course in all_courses %}
+                <div class="course-card" data-id="{{ course.id }}" data-name="{{ course.name | e }}" data-description="{{ course.description | e }}" data-filename="{{ course.filename | e }}" onclick="showCourseDetails(this)">
+                    <h4>{{ course.name }}</h4>
+                    <p>{{ course.description[:80] }}{% if course.description|length > 80 %}...{% endif %}</p>
+                </div>
+                {% else %}
+                <p>No courses have been uploaded yet.</p>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section id="courseDetailView">
+            <button class="btn" onclick="showSection('viewCoursesSection')">&larr; Back to All Courses</button>
+            <hr>
+            <h3 id="detail-name"></h3>
+            <p id="detail-desc"></p>
+            <div id="filePreviewContainer">
+                <p>Loading file preview...</p>
+            </div>
+            <div class="course-actions">
+                <button id="detail-edit-btn" class="btn small-btn">Edit</button>
+                <form id="detail-delete-form" method="POST" onsubmit="confirmDelete(event)">
+                    <button type="submit" class="btn small-btn btn-danger">Remove</button>
+                </form>
+            </div>
+        </section>
+
+        <section id="admins">
+            <h3>Manage Admins</h3>
+            <div class="content-grid">
+                <div class="form-container">
+                    <h4>Add New Admin</h4>
+                    <form id="addAdminForm">
+                        <label for="adminName">Full Name</label>
+                        <input type="text" id="adminName" name="name" placeholder="Enter full name" required>
+                        
+                        <label for="adminEmail">Email Address</label>
+                        <input type="email" id="adminEmail" name="email" placeholder="Enter email address" required>
+                        
+                        <button type="submit" class="btn">Send Invitation</button>
+                    </form>
+                </div>
+
+                <div class="list-container">
+                    <h4>Existing Admins</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for admin in admins %}
+                            <tr>
+                                <td>{{ admin.name }}</td>
+                                <td>{{ admin.email }}</td>
+                                <td>
+                                    {% if admin.id != session.user_id %}
+                                    <form method="POST" action="{{ url_for('remove_user', user_id=admin.id) }}" onsubmit="confirmRemoveAdmin(event)">
+                                        <input type="hidden" name="active_tab" value="admins">
+                                        <button type="submit" class="btn small-btn btn-danger">Remove</button>
+                                    </form>
+                                    {% else %}
+                                    (Your Account)
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="interns">
+            <h3>Manage Interns</h3>
+            <div class="content-grid">
+                <div class="form-container">
+                    <h4>Add New Intern</h4>
+                    <form id="addInternForm">
+                        <label for="internName">Full Name</label>
+                        <input type="text" id="internName" name="name" placeholder="Enter full name" required>
+                        
+                        <label for="internEmail">Email Address</label>
+                        <input type="email" id="internEmail" name="email" placeholder="Enter email address" required>
+                        
+                        <button type="submit" class="btn">Send Invitation</button>
+                    </form>
+                </div>
+
+                <div class="list-container">
+                    <h4>Existing Interns</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for intern in interns %}
+                            <tr>
+                                <td><a href="#" onclick="viewInternScores({{ intern.id }})">{{ intern.name }}</a></td>
+                                <td>{{ intern.email }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('remove_user', user_id=intern.id) }}" onsubmit="confirmRemoveIntern(event)">
+                                        <input type="hidden" name="active_tab" value="interns">
+                                        <button type="submit" class="btn small-btn btn-danger">Remove</button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <section id="editProfile">
+            <h3>Edit Your Profile</h3>
+            <form action="{{ url_for('edit_profile') }}" method="POST">
+                <label for="adminEditName">Full Name</label>
+                <input type="text" id="adminEditName" name="name" value="{{ user.name }}" required>
+
+                <label for="adminEditEmail">Email Address</label>
+                <input type="email" id="adminEditEmail" name="email" value="{{ user.email }}" required>
+
+                <label for="adminEditPassword">New Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="adminEditPassword" name="password" placeholder="Leave blank to keep current password">
+                    <span class="toggle-password" onclick="togglePasswordVisibility('adminEditPassword')">Show</span>
+                </div>
+                <small class="info-text">
+                    Must be at least 15 characters, with 1 uppercase, 1 lowercase, 1 number, and 1 symbol.
+                </small>
+                
+                <button type="submit" class="btn">Update Profile</button>
+            </form>
+        </section>
+
+    </main> </div> <div class="overlay" onclick="toggleSidebar()"></div>
+
+<div class="popup-overlay" id="editOverlay"></div>
+<div class="popup" id="editPopup">
+    <div class="popup-header">
+        <h3>Edit Course</h3>
+        <button onclick="closeEditModal()" class="close-btn">&times;</button>
+    </div>
+    <form id="editCourseForm" method="POST" enctype="multipart/form-data">
+        <label for="editName">Course Name</label>
+        <input type="text" id="editName" name="name" required>
+        <label for="editDescription">Description</label>
+        <textarea id="editDescription" name="description" rows="3" required></textarea>
+        <label for="editCourseFile">Replace File (Optional)</label>
+        <p>Current file: <span id="currentFileName"></span></p>
+        <input type="file" id="editCourseFile" name="course_file">
+        <button type="submit" class="btn">Save Changes</button>
+    </form>
+</div>
+
+<div class="popup-overlay" id="confirmOverlay"></div>
+<div class="popup" id="confirmPopup">
+    <div class="popup-header">
+        <h3>Confirmation</h3>
+    </div>
+    <p id="confirmMessage">Are you sure?</p>
+    <div class="confirm-actions">
+        <button id="cancelBtn" class="btn btn-secondary">Cancel</button>
+        <button id="confirmBtn" class="btn btn-danger">Confirm</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="logoutConfirmOverlay"></div>
+<div class="popup" id="logoutConfirmPopup">
+    <div class="popup-header">
+        <h3>Confirm Logout</h3>
+    </div>
+    <p>Are you sure you want to log out?</p>
+    <div class="confirm-actions">
+        <button id="cancelLogoutBtn" class="btn btn-secondary">Cancel</button>
+        <button id="confirmLogoutBtn" class="btn btn-danger">Logout</button>
+    </div>
+</div>
+
+<div class="popup-overlay" id="scoresOverlay"></div>
+<div class="popup" id="scoresPopup">
+    <div class="popup-header">
+        <h3 id="scoresModalTitle">Intern Scores</h3>
+        <button onclick="closeScoresModal()" class="close-btn">&times;</button>
+    </div>
+    <div id="scoresModalBody">
+        <p>Loading scores...</p>
+    </div>
+</div>
+
+<script>
+    let isFormDirty = false;
+    let confirmCallback = null;
+
+    function showSection(sectionId) {
+        document.querySelectorAll('main section').forEach(sec => sec.classList.remove('active-section'));
+        const sectionToShow = document.getElementById(sectionId);
+        if (sectionToShow) sectionToShow.classList.add('active-section');
+        if (document.querySelector('.sidebar').classList.contains('show')) toggleSidebar();
+    }
+
+    function showCourseDetails(cardElement) {
+        const course = {
+            id: cardElement.dataset.id,
+            name: cardElement.dataset.name,
+            description: cardElement.dataset.description
+        };
+        showSection('courseDetailView');
+        document.getElementById('detail-name').textContent = course.name;
+        document.getElementById('detail-desc').textContent = course.description;
+        document.getElementById('detail-edit-btn').onclick = () => openEditModal(course.id, course.name, course.description, cardElement.dataset.filename);
+        document.getElementById('detail-delete-form').action = `/delete_course/${course.id}`;
+        const previewContainer = document.getElementById('filePreviewContainer');
+        previewContainer.innerHTML = '<p>Loading file preview...</p>';
+        fetch(`/get_course_content/${course.id}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    previewContainer.innerHTML = `<p style="color: red;">Error: ${data.error}</p>`;
+                    return;
+                }
+                let previewHtml = '';
+                const fileUrl = `/uploads/${data.filename}`;
+                if (data.file_type === 'pdf') {
+                    previewHtml = `<iframe src="${fileUrl}" width="100%" height="600px" style="border: 1px solid #ccc; border-radius: 8px;"></iframe>`;
+                } else {
+                    previewHtml = `<p><strong>File:</strong> <a href="${fileUrl}" target="_blank" class="btn small-btn">Download ${data.filename}</a></p><p>(Live preview is only available for PDF files)</p>`;
+                }
+                previewContainer.innerHTML = previewHtml;
+            })
+            .catch(error => {
+                console.error('Fetch Error:', error);
+                previewContainer.innerHTML = `<p style="color: red;">Could not load file preview.</p>`;
+            });
+    }
+
+    function toggleDropdown() { document.getElementById("dropdownMenu").classList.toggle("show"); }
+    window.onclick = function(e) { if (!e.target.closest('.profile')) { document.getElementById("dropdownMenu").classList.remove("show"); } }
+    function toggleSidebar() {
+        document.querySelector('.sidebar').classList.toggle('show');
+        document.querySelector('.overlay').classList.toggle('show');
+    }
+
+    function openEditModal(courseId, name, description, filename) {
+        const form = document.getElementById('editCourseForm');
+        form.action = `/edit_course/${courseId}`;
+        document.getElementById('editName').value = name;
+        document.getElementById('editDescription').value = description;
+        document.getElementById('currentFileName').textContent = filename;
+        document.getElementById('editCourseFile').value = "";
+        isFormDirty = false;
+        form.oninput = () => { isFormDirty = true; };
+        document.getElementById('editOverlay').style.display = 'block';
+        document.getElementById('editPopup').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+
+    function closeEditModal() {
+        if (isFormDirty) {
+            showConfirmModal("You have unsaved changes. Discard them?", () => forceCloseEditModal());
+        } else {
+            forceCloseEditModal();
+        }
+    }
+
+    function forceCloseEditModal() {
+        document.getElementById('editOverlay').style.display = 'none';
+        document.getElementById('editPopup').style.display = 'none';
+        document.body.classList.remove('modal-open');
+        isFormDirty = false;
+    }
+    
+    function confirmDelete(event) {
+        event.preventDefault();
+        const form = event.target;
+        showConfirmModal("Are you sure you want to permanently delete this course?", () => form.submit());
+    }
+
+    function confirmRemoveAdmin(event) {
+        event.preventDefault();
+        const form = event.target;
+        showConfirmModal("Are you sure you want to remove this admin?", () => form.submit());
+    }
+
+    function confirmRemoveIntern(event) {
+        event.preventDefault();
+        const form = event.target;
+        showConfirmModal("Are you sure you want to remove this intern?", () => {
+            form.submit();
+        });
+    }
+
+    function showConfirmModal(message, onConfirm) {
+        document.getElementById('confirmMessage').textContent = message;
+        document.getElementById('confirmPopup').querySelector('h3').textContent = 'Confirmation';
+        document.getElementById('confirmBtn').textContent = 'Confirm';
+        document.getElementById('confirmOverlay').style.display = 'block';
+        document.getElementById('confirmPopup').style.display = 'block';
+        document.body.classList.add('modal-open');
+        confirmCallback = onConfirm;
+    }
+
+    function hideConfirmModal() {
+        document.getElementById('confirmOverlay').style.display = 'none';
+        document.getElementById('confirmPopup').style.display = 'none';
+        if (document.getElementById('editPopup').style.display !== 'block') {
+             document.body.classList.remove('modal-open');
+        }
+    }
+    
+    function showLogoutModal() {
+        document.getElementById('logoutConfirmOverlay').style.display = 'block';
+        document.getElementById('logoutConfirmPopup').style.display = 'block';
+        document.body.classList.add('modal-open');
+    }
+
+    function hideLogoutModal() {
+        document.getElementById('logoutConfirmOverlay').style.display = 'none';
+        document.getElementById('logoutConfirmPopup').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    function showToast(message, type = 'success') {
+        const toast = document.createElement('div');
+        toast.className = `toast-popup ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => { toast.classList.add('show'); }, 100);
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => { document.body.removeChild(toast); }, 500);
+        }, 3000);
+    }
+
+    function closeScoresModal() {
+        document.getElementById('scoresOverlay').style.display = 'none';
+        document.getElementById('scoresPopup').style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+
+    function viewInternScores(internId) {
+        const overlay = document.getElementById('scoresOverlay');
+        const popup = document.getElementById('scoresPopup');
+        const title = document.getElementById('scoresModalTitle');
+        const body = document.getElementById('scoresModalBody');
+
+        // Show the modal with a loading message
+        title.textContent = 'Loading...';
+        body.innerHTML = '<p>Fetching intern score data...</p>';
+        overlay.style.display = 'block';
+        popup.style.display = 'block';
+        document.body.classList.add('modal-open');
+        
+        overlay.onclick = closeScoresModal;
+
+        // Fetch the data from the backend
+        fetch(`/admin/get_intern_scores/${internId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    title.textContent = 'Error';
+                    body.innerHTML = `<p style="color: red;">${data.error}</p>`;
+                    return;
+                }
+
+                // Update the modal title with the intern's name
+                title.textContent = `Quiz Scores for ${data.intern_name}`;
+
+                if (data.scores.length === 0) {
+                    body.innerHTML = '<p>This intern has not completed any quizzes yet.</p>';
+                    return;
+                }
+
+                // Build the scores table
+                let tableHtml = `
+                    <table style="width: 100%; text-align: left;">
+                        <thead>
+                            <tr>
+                                <th>Course</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                data.scores.forEach(attempt => {
+                    tableHtml += `
+                        <tr>
+                            <td>${attempt.course_name}</td>
+                            <td>${attempt.score} / ${attempt.total_questions}</td>
+                        </tr>
+                    `;
+                });
+                tableHtml += '</tbody></table>';
+                body.innerHTML = tableHtml;
+            })
+            .catch(error => {
+                title.textContent = 'Error';
+                body.innerHTML = '<p style="color: red;">Could not load scores. Please check the server connection.</p>';
+                console.error('Fetch Error:', error);
+            });
+    }
+    
+    function togglePasswordVisibility(inputId) {
+    const passwordInput = document.getElementById(inputId);
+    const toggleIcon = passwordInput.nextElementSibling;
+
+    if (passwordInput.type === "password") {
+        passwordInput.type = "text";
+        toggleIcon.textContent = "Hide";
+    } else {
+        passwordInput.type = "password";
+        toggleIcon.textContent = "Show";
+    }
+}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Reset all modals on page load
+        hideConfirmModal();
+        forceCloseEditModal();
+        hideLogoutModal();
+        closeScoresModal();
+
+        const params = new URLSearchParams(window.location.search);
+        showSection(params.get('active_section') || 'uploadSection');
+
+        // Listeners for the generic confirmation modal
+        document.getElementById('cancelBtn').addEventListener('click', hideConfirmModal);
+        document.getElementById('confirmBtn').addEventListener('click', () => {
+            hideConfirmModal();
+            if (confirmCallback) confirmCallback();
+        });
+
+        document.getElementById('editOverlay').onclick = closeEditModal;
+
+        // Listeners for the Logout modal
+        const logoutLinks = document.querySelectorAll('.logout-link');
+        const confirmLogoutBtn = document.getElementById('confirmLogoutBtn');
+        const cancelLogoutBtn = document.getElementById('cancelLogoutBtn');
+        const logoutOverlay = document.getElementById('logoutConfirmOverlay');
+
+        logoutLinks.forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                showLogoutModal();
+            });
+        });
+        
+        confirmLogoutBtn.addEventListener('click', () => { window.location.href = "{{ url_for('logout') }}"; });
+        cancelLogoutBtn.addEventListener('click', hideLogoutModal);
+        logoutOverlay.addEventListener('click', hideLogoutModal);
+        
+        // Listener for the "Add Admin" form
+        const addAdminForm = document.getElementById('addAdminForm');
+        addAdminForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(addAdminForm);
+
+            fetch("{{ url_for('add_admin') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => { location.reload(); }, 2000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showToast('A network error occurred.', 'error');
+                console.error('Error:', error);
+            });
+        });
+        const addInternForm = document.getElementById('addInternForm');
+        addInternForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(addInternForm);
+
+            fetch("{{ url_for('add_intern') }}", {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showToast(data.message, 'success');
+                    setTimeout(() => { location.reload(); }, 2000);
+                } else {
+                    showToast(data.error, 'error');
+                }
+            })
+            .catch(error => {
+                showToast('A network error occurred.', 'error');
+                console.error('Error:', error);
+            });
+        });
+        const adminPasswordField = document.getElementById('adminEditPassword');
+    if (adminPasswordField) {
+        const adminToggleBtn = adminPasswordField.nextElementSibling;
+        adminPasswordField.addEventListener('input', () => {
+            if (adminPasswordField.value.length > 0) {
+                adminToggleBtn.style.display = 'block';
+            } else {
+                adminToggleBtn.style.display = 'none';
+            }
+        });
+    }
+    });
+</script>
+
+</body>
+</html>

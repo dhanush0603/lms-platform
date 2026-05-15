@@ -1,0 +1,12 @@
+{% extends "base_email.html" %}
+
+{% block subject %}Welcome to the LMS!{% endblock %}
+
+{% block title %}Welcome to the LMS!{% endblock %}
+
+{% block content %}
+    <p>Hello {{ user_name }},</p>
+    <p>You have been invited to join the Learning Management System. Click the button below to set your password and get started. This link is valid for 24 hours.</p>
+    <a href="{{ reset_link }}" class="btn">Set Your Password</a>
+    <p>If you were not expecting this invitation, please ignore this email.</p>
+{% endblock %}

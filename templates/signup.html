@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Signup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/signup-style.css') }}">
+
+    <style>
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            user-select: none; /* Prevents text selection on repeated clicks */
+            font-weight: 600;
+            font-size: 14px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="signup-container">
+        <div class="signup-card">
+            <h2>Sign Up</h2>
+            <form id="signupForm" action="/signup" method="POST" novalidate>
+
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="Enter your full name" value="{{ name or '' }}" required>
+
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" value="{{ email or '' }}" required>
+
+                {% if email_error %}
+                    <span class="error-message">{{ email_error }}</span>
+                {% endif %}
+
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Enter password" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility('password')">Show</span>
+                </div>
+                <small id="passwordRequirements" class="info-text">
+                    Password must be at least 15 characters long, include 1 lowercase, 1 uppercase, 1 number, and 1 symbol.
+                </small>
+                <label for="confirmPassword">Confirm Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Confirm password" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">Show</span>
+                </div>
+                <small id="passwordMatch" class="error-text"></small>
+                <button type="submit" class="btn">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="{{ url_for('index') }}">Login</a></p>
+        </div>
+    </div>
+
+    <script>
+        const signupForm = document.getElementById('signupForm');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const passwordMatch = document.getElementById('passwordMatch');
+        const passwordRequirements = document.getElementById('passwordRequirements');
+
+        // Regex for password conditions
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{15,}$/;
+
+        // Validate on form submit
+        signupForm.addEventListener('submit', function(e){
+            passwordMatch.textContent = '';
+            let valid = true;
+
+            if(!passwordRegex.test(password.value)){
+                passwordRequirements.classList.add('error-text');
+                valid = false;
+            } else {
+                passwordRequirements.classList.remove('error-text');
+            }
+
+            if(password.value !== confirmPassword.value){
+                confirmPassword.classList.add('input-error');
+                passwordMatch.textContent = "Passwords do not match";
+                valid = false;
+            } else {
+                confirmPassword.classList.remove('input-error');
+                passwordMatch.textContent = "";
+            }
+
+            if(!valid){
+                e.preventDefault();
+            }
+        });
+
+        // Real-time feedback for confirm password
+        confirmPassword.addEventListener('input', () => {
+            if(confirmPassword.value !== password.value){
+                confirmPassword.classList.add('input-error');
+                passwordMatch.textContent = "Passwords do not match";
+            } else {
+                confirmPassword.classList.remove('input-error');
+                passwordMatch.textContent = "";
+            }
+        });
+
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = passwordInput.nextElementSibling; // The <span> eye icon
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.textContent = "Hide";
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.textContent = "Show";
+            }
+        }
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admins List</title>
+</head>
+<body>
+{% for admin in admins %}
+<tr>
+    <td>{{ admin.name }}</td>
+    <td>{{ admin.email }}</td>
+    <td>
+        {% if admin.id != session.user_id %}
+        <form action="{{ url_for('remove_user', user_id=admin.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to remove this admin?');">
+            <input type="hidden" name="active_tab" value="admins">
+            <button type="submit" class="btn small-btn">Remove</button>
+        </form>
+        {% else %}
+        (Your Account)
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+</body>

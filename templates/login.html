@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMS Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/login-style.css') }}">
+
+    <style>
+        .password-wrapper {
+            position: relative;
+        }
+        .toggle-password {
+            position: absolute;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            cursor: pointer;
+            user-select: none; /* Prevents text selection on repeated clicks */
+            font-weight: 600;
+            font-size: 14px;
+            color: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <h2>LMS Login</h2>
+            
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form id="loginForm" action="/login" method="POST">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter your email" value="{{ email or '' }}" required>
+
+                <span id="emailMessage" class="error-message">
+                    {% if email_error %}{{ email_error }}{% endif %}
+                </span>
+
+                <label for="password">Password</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                    <span class="toggle-password" onclick="togglePasswordVisibility('password')">Show</span>
+                </div>
+
+                {% if password_error %}
+                    <span class="error-message">{{ password_error }}</span>
+                {% endif %}
+
+                <div class="forgot-password">
+                    <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+                </div>
+                <button type="submit" class="btn">Login</button>
+            </form>
+            <p>Don't have an account? <a href="{{ url_for('signup') }}">Sign Up</a></p>
+        </div>
+    </div>
+
+    <script>
+        const emailInput = document.getElementById('email');
+        const emailMessage = document.getElementById('emailMessage');
+        let debounceTimeout;
+
+        emailInput.addEventListener('input', () => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                const email = emailInput.value.trim();
+                
+                if (email === "") {
+                    emailMessage.textContent = "";
+                    return;
+                }
+
+                fetch("{{ url_for('check_email') }}", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email: email })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.exists) {
+                        emailMessage.textContent = ""; // Email exists, clear message
+                        emailMessage.style.color = 'green';
+                    } else {
+                        emailMessage.textContent = "No account is registered with this email.";
+                        emailMessage.style.color = 'red';
+                    }
+                });
+            }, 500); // Wait 500ms after user stops typing
+        });
+        
+        function togglePasswordVisibility(inputId) {
+            const passwordInput = document.getElementById(inputId);
+            const toggleIcon = passwordInput.nextElementSibling; // The <span> eye icon
+
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+                toggleIcon.textContent = "Hide";
+            } else {
+                passwordInput.type = "password";
+                toggleIcon.textContent = "Show";
+            }
+        }
+    </script>
+</body>
+</html>

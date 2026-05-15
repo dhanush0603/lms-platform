@@ -1,0 +1,104 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Body */
+body {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Login Container */
+.login-container {
+    width: 100%;
+    max-width: 400px;
+    padding: 20px;
+}
+
+/* Card */
+.login-card {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.login-card h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.login-card input {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+/* Add to login-style.css */
+.error-message {
+    font-size: 13px;
+    color: #e74c3c; /* Red color */
+    display: block;
+    text-align: left;
+    margin-top: -5px;
+    margin-bottom: 10px;
+    min-height: 18px; /* Prevents layout shift */
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 6px;
+    background-color: #764ba2;
+    color: white;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn:hover {
+    background-color: #667eea;
+}
+
+.login-card p {
+    margin-top: 15px;
+    font-size: 14px;
+}
+
+.login-card a {
+    text-decoration: none;
+    color: #764ba2;
+}
+
+.login-card a:hover {
+    color: #667eea;
+}
+
+.forgot-password {
+    text-align: right;
+    margin-top: 5px;
+    margin-bottom: 10px;
+}
+
+.forgot-password a {
+    font-size: 13px;
+    color: #764ba2;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.forgot-password a:hover {
+    color: #667eea;
+    text-decoration: underline;
+}

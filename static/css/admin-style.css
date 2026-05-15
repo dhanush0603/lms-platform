@@ -1,0 +1,535 @@
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+}
+
+.admin-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #2c2f76;
+    color: #fff;
+    padding: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+}
+.sidebar h2 {
+    margin-bottom: 30px;
+    font-size: 22px;
+    text-align: center;
+}
+.sidebar ul {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    flex-grow: 1;
+}
+.sidebar ul li {
+    margin: 15px 0;
+}
+.sidebar ul li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    padding: 8px 12px;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+.sidebar ul li a:hover {
+    background-color: rgba(255,255,255,0.1);
+    color: #a0c4ff;
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 270px;
+    flex: 1;
+    padding: 30px;
+}
+.main-content section {
+    display: none;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+
+.main-content section.active-section {
+    display: block;   /* only show active section */
+}
+.main-content form input,
+.main-content form textarea {
+    width: 90%;
+    padding: 10px;
+    margin: 8px 0;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+.btn {
+    background-color: #2c2f76;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: 0.3s;
+}
+.btn:hover {
+    background-color: #a0c4ff;
+}
+.small-btn {
+    padding: 5px 10px;
+    font-size: 14px;
+    margin-top: 0; /* Adjust for table buttons */
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+table th, table td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ccc;
+}
+
+/* Popup */
+.popup {
+    position: fixed;
+    top: 20%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #fff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    z-index: 1000;
+}
+
+/* --- Styles for Edit Modal --- */
+#editOverlay, #editPopup {
+    display: none; /* Hide the modal by default */
+}
+
+.popup-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.popup-header h3 { margin: 0; }
+
+.popup-header .close-btn {
+    font-size: 24px;
+    border: none;
+    background: none;
+    cursor: pointer;
+}
+
+
+/* Top Navigation */
+.top-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #2c2f76;
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+.top-nav .welcome {
+    font-size: 16px;
+    font-weight: 500;
+}
+.top-nav .profile {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+}
+.top-nav .profile img.profile-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #fff;
+    transition: 0.3s;
+}
+.top-nav .profile img.profile-icon:hover {
+    transform: scale(1.1);
+}
+
+/* Dropdown */
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 55px;
+    right: 0;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    min-width: 120px;
+    z-index: 10;
+}
+.dropdown-menu a {
+    display: block;
+    padding: 10px;
+    text-decoration: none;
+    color: #333;
+    border-radius: 6px;
+    transition: 0.3s;
+}
+.dropdown-menu a:hover {
+    background-color: #f2f2f2;
+}
+.dropdown-menu.show {
+    display: block;
+}
+
+/* --- ADDED/VERIFIED STYLES --- */
+
+/* Flash Message Styles */
+.flash-messages {
+    margin-bottom: 20px;
+}
+.flash-success {
+    padding: 15px;
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+    border-radius: 8px;
+}
+.flash-error {
+    padding: 15px;
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+    border-radius: 8px;
+}
+
+/* Horizontal Rule Style */
+hr {
+    border: none;
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 30px 0;
+}
+/* Toast Pop-up Styles */
+.toast-popup {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 12px 20px;
+    border-radius: 8px;
+    color: #fff;
+    font-weight: 500;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 2000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s, visibility 0.3s, bottom 0.3s;
+}
+
+.toast-popup.show {
+    opacity: 1;
+    visibility: visible;
+    bottom: 40px;
+}
+
+.toast-popup.success {
+    background-color: #28a745; /* Green */
+}
+
+.toast-popup.error {
+    background-color: #dc3545; /* Red */
+}
+
+/* --- Hamburger Menu Icon Styling --- */
+.hamburger-menu {
+    display: none; /* Hidden by default on large screens */
+    cursor: pointer;
+}
+
+.hamburger-menu span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    margin: 5px 0;
+    background-color: #fff; /* Changed to white to be visible on the top-nav */
+    transition: 0.4s;
+}
+
+/* --- Responsive Styles --- */
+@media (max-width: 768px) {
+
+    .hamburger-menu {
+        display: block; /* Show the icon on small screens */
+    }
+
+    .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transform: translateX(-100%); /* Start completely off-screen */
+        transition: transform 0.3s ease-in-out;
+    }
+
+    .sidebar.show {
+        transform: translateX(0); /* Slide it into view */
+    }
+
+    .main-content {
+        margin-left: 0; /* Remove the margin so content fills the screen */
+    }
+}
+
+/* Optional: For very small mobile phones */
+@media (max-width: 480px) {
+    .top-nav {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .main-content {
+        padding: 15px;
+    }
+}
+/* --- Overlay for Slide-in Menu --- */
+.overlay {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Semi-transparent black */
+    z-index: 999; /* Below the sidebar (1000) but above everything else */
+}
+
+.overlay.show {
+    display: block; /* Show it when the menu is open */
+}
+
+/* --- Styles for Course Upload & List Section --- */
+.content-grid {
+    display: grid;
+    grid-template-columns: 1fr; /* Creates two equal columns */
+    gap: 30px; /* Space between the columns */
+}
+
+.course-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 400px; /* Limit height and make it scrollable */
+    overflow-y: auto;
+}
+
+.course-item {
+    background: #f9f9f9;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #eee;
+}
+
+.course-item h4 {
+    margin: 0 0 5px 0;
+}
+
+.course-item p {
+    margin: 0 0 10px 0;
+    font-size: 14px;
+    color: #555;
+}
+
+.course-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Make it a single column on smaller screens */
+@media (max-width: 992px) {
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* --- Styles for Edit Modal Form --- */
+#editPopup form {
+    display: flex;
+    flex-direction: column;
+}
+
+#editPopup form label {
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 500;
+    text-align: left;
+}
+
+#editPopup form input,
+#editPopup form textarea {
+    width: 100%; /* Make inputs take full width of the modal */
+    box-sizing: border-box; /* Important for padding */
+}
+
+#editPopup form p {
+    font-size: 14px;
+    text-align: left;
+    color: #555;
+}
+
+/* Add this class to prevent the main page from scrolling when a modal is open */
+.modal-open {
+    overflow: hidden;
+}
+
+/* --- Styles for Custom Confirmation Modal --- */
+#confirmOverlay, #confirmPopup {
+    display: none; /* Hidden by default */
+}
+
+.confirm-actions {
+    display: flex;
+    justify-content: flex-end; /* Align buttons to the right */
+    gap: 10px;
+    margin-top: 20px;
+}
+
+/* Style for the dangerous "Discard" button */
+.btn-danger {
+    background-color: #dc3545;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* Style for the safe "Cancel" button */
+.btn-secondary {
+    background-color: #6c757d;
+}
+.btn-secondary:hover {
+    background-color: #5a6268;
+}
+
+/* --- Styles for Course Cards --- */
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
+    gap: 20px;
+}
+
+.course-card {
+    background: #f9f9f9;
+    border: 1px solid #eee;
+    border-radius: 8px;
+    padding: 15px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.course-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 15px rgba(0,0,0,0.1);
+}
+
+.course-card h4 {
+    margin: 0 0 10px 0;
+    color: #2c2f76;
+}
+
+.course-card p {
+    font-size: 14px;
+    color: #555;
+    margin: 0;
+}
+
+/* --- Styles for Admin/Intern Management Forms --- */
+.form-container form label {
+    display: block; /* Makes the label take its own line */
+    text-align: left;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-container form input {
+    width: 100%; /* Ensures input fields fill the form container */
+    box-sizing: border-box;
+}
+
+/* --- Styles for Edit Profile Form --- */
+#editProfile form label {
+    display: block;
+    text-align: left;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+#editProfile form input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.password-wrapper {
+    position: relative;
+}
+
+.toggle-password {
+    display: none; /* Hidden by default */
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-weight: 500;
+    color: #667eea;
+    user-select: none;
+}
+
+.info-text {
+    font-size: 12px;
+    color: #555;
+    margin-top: 5px;
+    margin-bottom: 10px;
+    display: block;
+    text-align: left;
+}
+
+/* --- Flash Message Styles --- */
+.flash-messages {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 8px;
+    font-weight: 500;
+}
+.flash-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+.flash-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
