@@ -20,7 +20,7 @@ import random
 # --- APP CONFIGURATION ---
 app = Flask(__name__)
 app.secret_key = 'your_super_secret_key' 
-GEMINI_API_KEY = "AIzaSyAlSZ1YD7lYKop4UhkhQFVU8HjBMoclmVM" 
+GEMINI_API_KEY = "API KEY" 
 genai.configure(api_key=GEMINI_API_KEY)
 model = genai.GenerativeModel('gemini-1.5-flash-latest')
 
